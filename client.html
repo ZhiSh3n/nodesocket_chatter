@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<!-- link our stylesheets -->
+	<link rel="stylesheet" type="text/css" href="client.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+	<!-- link socket -->
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+	<!-- encapsulate everything in a container for 70% width -->
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12" id="whoAmI">
+			</div>
+		</div>
+		<!-- the room list, user list, and room chat will be encased in a table -->
+		<table class="table">
+			<thead>
+				<tr class="row">
+					<th class="col-md-3">CHAT ROOM LISTINGS</th>
+					<th class="col-md-3">CHATTERS IN ROOM</th>
+					<th class="col-md-6">CHAT ROOM LOBBY</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="row">
+					<td class="col-md-3">
+						<div class="list-group" id="roomList">
+						</div>
+						<a class="btn btn-light btn-block customStylingC" href="#" data-toggle="modal" data-target="#create_room_modal">
+							Create Room
+						</a>
+						
+						<a class="btn btn-light btn-block customStylingC" href="#" data-toggle="modal" data-target="#change_username_modal">
+							Change Username
+						</a>	
+						<br>
+						<div class="row">
+							<div class="col-md-12" id="errorBoxName">
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-12" id="errorBoxRoom">
+							</div>
+						</div>
+					</td>
+					<td class="col-md-3">
+						<ul id="chattersList">
+						</ul>
+					</td>
+					<td class="col-md-6">
+						<div class="table-responsive customStylingA" id="scrollDown">
+							<div class="container">
+								<table class="table customStylingB">
+									<tbody id="chatLog">
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<!-- we want to allow users to be able to enter a username
+								and then send their messages -->
+						<div class="row">
+							<div class="col-md-3">
+								<h3 id="username"></h3>
+							</div>
+							<div class="col-md-9">
+								<div class="input-group">
+									<input class="form-control" type="text" id="message_input" placeholder="Message"/>
+									<span class="input-group-btn">
+										<button id="sendButton" class="btn btn-primary">Send</button>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-12" id="admin_help">
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-12" id="errorBox">
+							</div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="modal fade" id="create_room_modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Create a Room</h5>
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<input class="form-control" type="text" id="room_name" placeholder="Room Name" />
+						</div>
+						<div class="form-group">
+							<input class="form-control" type="password" id="room_password" maxlength="16" placeholder="Room Password" />
+						</div>
+						<div class="form-group">
+							<small>Password is optional.</small>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button id="createRoomButton" class="btn btn-primary" data-dismiss="modal">Create</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- we need to make the users plug in their old username to verify -->
+
+	<div class="modal fade" id="change_username_modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Change Your Username</h5>
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<input class="form-control" type="text" id="new_username" placeholder="New Username"/>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button id="changeNameButton" class="btn btn-primary" data-dismiss="modal">Change</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+	<!-- client.js information -->
+	<script type="text/javascript">
+		// connect to socket!
+		var socketio = io.connect();
+
+		// When the user connects for the first time,
+		// we call new_session_to_server in server.js.
+		socketio.on("connect", function() {
+			var username = prompt("Please enter a valid username:");
+			socketio.emit("new_session_to_server", {
+				"username": username
+			});
+		});
+
+		socketio.on("reprompt", function(data) {
+			var askagain = prompt(data + " Please enter a valid username:")
+			socketio.emit("new_session_to_server", {
+				"username": askagain
+			});
+		});
+
+		// SENDING MESSAGES
+		//////////////////////////////////////////////////////////////////
+		// When sendButton is pressed, call the function sendMessage().
+		document.getElementById("sendButton").addEventListener("click", sendMessage);
+		// This function gets the user's name and message and emits
+		// to message_to_server.
+		function sendMessage() {
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = "";
+			var errorBoxRoom = document.getElementById("errorBoxRoom");
+			errorBoxRoom.innerHTML = "";
+			var message = document.getElementById("message_input").value;
+			var name = document.getElementById("username").textContent;
+			document.getElementById("message_input").value = "";
+			document.getElementById("message_input").focus();
+			socketio.emit("message_to_server", {
+				"message": message,
+				"name": name
+			});
+		};
+		// This function recieves the message back from socket.
+		// Here we make sure that the message is not empty, and
+		// that the name is not empty either. If all is well,
+		// then we create a new table cell to display the name and
+		// message.
+		socketio.on("message_to_client", function(data) {
+			var chatLog = document.getElementById("chatLog");
+			var newElement = document.createElement("tr");
+			newElement.className = "row";
+			if (data["message"] !== "" && data["message"] !== null) {
+				if (data["name"] === "" || data["name"] === null) {
+					newElement.innerHTML = '<td class="col-md-3">Anonymous</td><td class="col-md-9" style="overflow-wrap: break-word; word-break: break-all">' + data["message"] + '</td>';
+				} else {
+					newElement.innerHTML = '<td class="col-md-3">' + data["name"] + '</td><td class="col-md-9" style="overflow-wrap: break-word; word-break: break-all">' + data["message"] + '</td>';
+				}
+				chatLog.appendChild(newElement);
+			}
+			var element = document.getElementById("scrollDown");
+			element.scrollTop = element.scrollHeight;
+		});
+		// A small chunk of code to let users press ENTER to send
+		// instead of having to click the button all the time.
+		document.getElementById("message_input").addEventListener("keydown", function(e) {
+			if (e.keyCode == 13) {
+				sendMessage();
+			}
+		}, false);
+
+		socketio.on("name_to_client", function(data) {
+			var chattersList = document.getElementById("chattersList");
+			chattersList.innerHTML = "";
+			for (var a = 0; a < data.length; a++) {
+				if (data[a] != "SERVER") {
+					chattersList.innerHTML += '<li>' + data[a] + '</li>';
+				}
+			}
+		});
+		socketio.on("whoAmI", function(data) {
+			var whoAmI = document.getElementById("whoAmI");
+			var username = document.getElementById("username");
+			whoAmI.innerHTML = '<div class="alert alert-primary" role="alert">You are signed on as <strong>' + data["name"] + '</strong> and connected to <strong>' + data["room"] + '</strong></div>';
+			username.textContent = data["name"] + ":";
+		});
+
+		socketio.on("process_error", function(data) {
+			var message = data["message"];
+			var alertClass = data["alert"];
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' + message + '</div';
+		});
+
+		document.getElementById("changeNameButton").addEventListener("click", changeUsername);
+
+		function changeUsername() {
+			
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = "";
+			var errorBoxName = document.getElementById("errorBoxName");
+			errorBoxName.innerHTML = "";
+			var new_username = String(document.getElementById("new_username").value);
+			socketio.emit("change_username_server", {
+				"new_name": new_username
+			});
+			document.getElementById("new_username").value = "";
+		};
+
+		document.getElementById("createRoomButton").addEventListener("click", createRoom);
+
+		function createRoom() {
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = "";
+			var errorBoxRoom = document.getElementById("errorBoxRoom");
+			errorBoxRoom.innerHTML = "";
+			var room_name = String(document.getElementById("room_name").value);
+			var room_password = String(document.getElementById("room_password").value);
+			socketio.emit("create_room_server", {
+				"room_name": room_name,
+				"room_password": room_password
+			});
+			document.getElementById("room_name").value = "";
+			document.getElementById("room_password").value = "";
+		};
+		socketio.on("process_room_error", function(data) {
+			var message = data["message"];
+			var alertClass = data["alert"];
+			var errorBoxRoom = document.getElementById("errorBoxRoom");
+			errorBoxRoom.innerHTML = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' + message + '</div';
+		});
+
+		socketio.on("list_rooms", function(data) {
+			var chattersList = document.getElementById("roomList");
+			chattersList.innerHTML = "";
+			for (var a = 0; a < data.length; a++) {
+				chattersList.innerHTML += '<button id="roomCell" type="button" onclick="joinRoom(this)"class="list-group-item list-group-item-action" value="' + data[a] + '">' + data[a] + '</button>';
+			}
+		});
+
+		function joinRoom(object) {
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = "";
+			var errorBoxRoom = document.getElementById("errorBoxRoom");
+			errorBoxRoom.innerHTML = "";
+			socketio.emit("join_room", object.value);
+		};
+		
+		socketio.on("clear_errors", function(data) {
+			var errorBox = document.getElementById("errorBox");
+			errorBox.innerHTML = "";
+			var errorBoxRoom = document.getElementById("errorBoxRoom");
+			errorBoxRoom.innerHTML = "";
+		})
+
+		socketio.on("password_requirement", function(data) {
+			var password = prompt("This room requires a password to enter: ");
+			socketio.emit("join_with_password", {
+				"room_name": data,
+				"room_password": password
+			});
+		});
+
+		socketio.on("clear_screen", function(data) {
+			var chatLog = document.getElementById("chatLog");
+			chatLog.innerHTML = "";
+		});
+		
+		socketio.on("admin_tip", function(data) {
+			var place = document.getElementById("admin_help");
+			if (data == true) {
+				place.innerHTML = "<small>As the admin of this room, type /help to see room commands.</small>";
+			} else {
+				place.innerHTML = "";
+			}
+		});
+	</script>
+</body>
+
+</html>

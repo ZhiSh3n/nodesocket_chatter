@@ -1,0 +1,32 @@
+body {
+	padding-top: 20px;
+}
+
+.table-responsive {
+	min-height: 250px;
+	max-height: 250px;
+}
+
+.customStylingA {
+	border: 1px solid grey;
+	margin: -1px;
+	margin-bottom: 25px;
+	margin-top: 20px;
+}
+
+.customStylingB {
+	margin: 0px !important;
+}
+
+.customStylingC {
+	margin-top: 15px;
+	margin-bottom: 15px;
+}
+
+#admin_help {
+	padding-top: 10px;
+}
+
+#errorBox {
+	
+}
